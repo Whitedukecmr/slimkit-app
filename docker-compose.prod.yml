@@ -1,17 +1,16 @@
-version: '3.8'
 services:
   backend:
     image: ${ECR_REGISTRY}/slimkit/backend:latest
     container_name: slimkit-backend
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_API_KEY=not-needed
     restart: unless-stopped
 
   frontend:
     image: ${ECR_REGISTRY}/slimkit/frontend:latest
     container_name: slimkit-frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: unless-stopped
