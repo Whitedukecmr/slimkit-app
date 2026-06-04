@@ -36,7 +36,7 @@ SlimKit est une application web mobile-first qui aide à perdre du poids par la 
 ### Fonctionnalités
 - **Onboarding en 3 étapes** : Profil → Groupe d'âge → Objectif
 - **Calcul personnalisé** : Pas/jour, km, calories brûlées selon l'âge et l'objectif
-- **Conseils adaptés** par tranche d'âge (30-39, 40-49, 50-59, 60+)
+- **Conseils adaptés** par tranche d'âge (20-29, 30-39, 40-49, 50-59, 60+)
 - **Analyse IA des repas** : photo → calories, protéines, glucides, lipides, score santé
 - **Propulsé par Claude Sonnet 4** via AWS Bedrock
 
@@ -50,7 +50,7 @@ SlimKit est une application web mobile-first qui aide à perdre du poids par la 
 flowchart TD
     Internet([🌐 Internet]) --> DNS
 
-    DNS["🦆 DuckDNS\nslimkit.duckdns.org\n→ 15.237.135.238"]
+    DNS["🦆 DuckDNS\nslimkit.duckdns.org\n→ 1...237.13...238"]
 
     DNS --> EC2
 
