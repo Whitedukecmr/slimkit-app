@@ -1,4 +1,4 @@
-# 🏃 SlimKit — Walking Weight Loss Coach + AI Meal Analyzer
+# 🏃 SlimKit 
 
 ![HTTPS](https://img.shields.io/badge/HTTPS-enabled-brightgreen)
 ![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20ECR%20%7C%20Bedrock-orange)
