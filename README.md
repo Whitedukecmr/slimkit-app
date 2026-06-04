@@ -16,7 +16,7 @@ Ce projet a été réalisé dans un **contexte d'apprentissage personnel**.
 
 L'intégralité du **code applicatif** (frontend React, backend Node.js, logique métier) a été **générée par Claude (Anthropic)**.
 
-En revanche, **Fred** a :
+En revanche, **Frédéric Junior EPESSE PRISO** a :
 - Suivi et compris chaque étape du déploiement
 - Provisionné l'infrastructure AWS **manuellement via AWS CLI et Terraform**
 - Configuré le pipeline **CI/CD GitHub Actions** de A à Z
@@ -44,108 +44,87 @@ SlimKit est une application web mobile-first qui aide à perdre du poids par la 
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        INTERNET                             │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ HTTPS (443)
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              DuckDNS (slimkit.duckdns.org)                  │
-│                  DNS → 15.237.135.238                       │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    AWS EC2 t3.micro                         │
-│                  eu-west-3 (Paris)                          │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              Nginx (reverse proxy)                  │   │
-│  │   :80 → redirect HTTPS                              │   │
-│  │   :443 → SSL/TLS (Let's Encrypt)                    │   │
-│  └──────────────┬──────────────────────┬──────────────┘   │
-│                 │                      │                    │
-│                 ▼                      ▼                    │
-│  ┌──────────────────────┐  ┌──────────────────────────┐   │
-│  │  Docker: Frontend    │  │  Docker: Backend          │   │
-│  │  React + Nginx       │  │  Node.js + Express        │   │
-│  │  :8080               │  │  :3001                    │   │
-│  └──────────────────────┘  └────────────┬─────────────┘   │
-│                                          │                  │
-└──────────────────────────────────────────┼──────────────────┘
-                                           │ IAM Role
-                                           ▼
-                            ┌──────────────────────────┐
-                            │     AWS Bedrock           │
-                            │  Claude Sonnet 4          │
-                            │  (analyse repas IA)       │
-                            └──────────────────────────┘
+### Infrastructure globale
+
+```mermaid
+flowchart TD
+    Internet([🌐 Internet]) --> DNS
+
+    DNS["🦆 DuckDNS\nslimkit.duckdns.org\n→ 15.237.135.238"]
+
+    DNS --> EC2
+
+    subgraph EC2["☁️ AWS EC2 t3.micro — eu-west-3 Paris"]
+        Nginx["🔀 Nginx\nReverse Proxy\n:80 redirect → HTTPS\n:443 SSL Let's Encrypt"]
+
+        Nginx --> Frontend
+        Nginx --> Backend
+
+        Frontend["⚛️ Docker: Frontend\nReact + Vite\n:8080"]
+        Backend["🟢 Docker: Backend\nNode.js + Express\n:3001"]
+    end
+
+    Backend -->|IAM Role| Bedrock
+
+    subgraph AWS["☁️ AWS Services"]
+        Bedrock["🤖 AWS Bedrock\nClaude Sonnet 4\nAnalyse repas IA"]
+        ECR["📦 AWS ECR\nslimkit/frontend\nslimkit/backend"]
+    end
+
+    style EC2 fill:#1a1a2e,stroke:#3B5BFC,color:#fff
+    style AWS fill:#0d1117,stroke:#f59e0b,color:#fff
 ```
 
 ### Pipeline CI/CD
 
-```
-┌──────────┐    git push     ┌─────────────────────────────────────┐
-│  VSCode  │ ──────────────► │         GitHub Actions               │
-│  WSL     │                 │                                      │
-└──────────┘                 │  Job 1: Build & Push                 │
-                             │  ┌─────────────────────────────┐    │
-                             │  │ • Checkout code              │    │
-                             │  │ • Configure AWS credentials  │    │
-                             │  │ • Login to ECR               │    │
-                             │  │ • Build Docker images        │    │
-                             │  │ • Push to ECR                │    │
-                             │  └──────────────┬──────────────┘    │
-                             │                 │ needs: build       │
-                             │  Job 2: Deploy  ▼                    │
-                             │  ┌─────────────────────────────┐    │
-                             │  │ • Copy docker-compose        │    │
-                             │  │ • SSH into EC2               │    │
-                             │  │ • Pull new images            │    │
-                             │  │ • docker compose up -d       │    │
-                             │  └──────────────┬──────────────┘    │
-                             └─────────────────┼────────────────────┘
-                                               │
-                                               ▼
-                             ┌─────────────────────────────────────┐
-                             │    AWS ECR                           │
-                             │  slimkit/frontend:latest            │
-                             │  slimkit/backend:latest             │
-                             └─────────────────┬────────────────────┘
-                                               │ docker pull
-                                               ▼
-                             ┌─────────────────────────────────────┐
-                             │         EC2 t3.micro                 │
-                             │    docker compose up -d              │
-                             │    → App mise à jour en prod 🚀      │
-                             └─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    Dev["💻 WSL\ngit push"] --> GH
+
+    subgraph GH["🔄 GitHub Actions"]
+        direction TB
+        J1["📦 Job 1: Build & Push\n• Checkout code\n• AWS credentials\n• Login ECR\n• Build images\n• Push to ECR"]
+        J2["🚀 Job 2: Deploy\n• Copy docker-compose\n• SSH → EC2\n• docker pull\n• docker compose up -d"]
+        J1 -->|needs: build| J2
+    end
+
+    GH --> ECR["📦 AWS ECR\nfrontend:latest\nbackend:latest"]
+    ECR -->|docker pull| EC2["☁️ EC2\nApp en production\n✅ Live"]
+
+    style GH fill:#0d1117,stroke:#2088FF,color:#fff
 ```
 
 ### Infrastructure Terraform
 
-```
-AWS Account (214654654048)
-└── eu-west-3 (Paris)
-    ├── VPC (10.0.0.0/16)
-    │   ├── Subnet public (10.0.1.0/24) — eu-west-3a
-    │   ├── Internet Gateway
-    │   ├── Route Table (0.0.0.0/0 → IGW)
-    │   └── Security Group
-    │       ├── Ingress 22  (SSH)
-    │       ├── Ingress 80  (HTTP)
-    │       ├── Ingress 443 (HTTPS)
-    │       └── Egress ALL
-    ├── EC2 t3.micro
-    │   ├── AMI: Ubuntu 24.04 LTS
-    │   ├── Volume: 20Go gp3 chiffré
-    │   ├── Key Pair: slimkit-key (RSA 4096)
-    │   ├── IAM Role: AmazonBedrockFullAccess
-    │   │             AmazonEC2ContainerRegistryReadOnly
-    │   └── Elastic IP: 15.237.135.238
-    └── ECR
-        ├── slimkit/frontend
-        └── slimkit/backend
+```mermaid
+flowchart TD
+    subgraph TF["🏗️ Terraform — eu-west-3"]
+        subgraph NET["📡 Module Network"]
+            VPC["VPC\n10.0.0.0/16"]
+            SUB["Subnet public\n10.0.1.0/24\neu-west-3a"]
+            IGW["Internet Gateway"]
+            RTB["Route Table\n0.0.0.0/0 → IGW"]
+            SG["Security Group\n:22 SSH\n:80 HTTP\n:443 HTTPS"]
+        end
+
+        subgraph COM["🖥️ Module Compute"]
+            EC2["EC2 t3.micro\nUbuntu 24.04\n20Go gp3 chiffré"]
+            EIP["Elastic IP\n15.237.135.238"]
+            KP["Key Pair\nRSA 4096"]
+            IAM["IAM Role\nBedrock + ECR"]
+            ECRR["ECR Repos\nfrontend\nbackend"]
+        end
+    end
+
+    VPC --> SUB --> IGW --> RTB --> SG --> EC2
+    EC2 --> EIP
+    EC2 --> KP
+    EC2 --> IAM
+    EC2 --> ECRR
+
+    style TF fill:#1a1a2e,stroke:#7B42BC,color:#fff
+    style NET fill:#0d1117,stroke:#22c55e,color:#fff
+    style COM fill:#0d1117,stroke:#3B5BFC,color:#fff
 ```
 
 ---
@@ -254,7 +233,7 @@ slimkit-app/
 ```
 
 ```
-slimkit-infra/                  # Infrastructure Terraform (repo séparé)
+slimkit-infra/                  # Infrastructure Terraform
 ├── main.tf
 ├── variables.tf
 ├── outputs.tf
@@ -296,7 +275,6 @@ gh run watch --repo Whitedukecmr/slimkit-app
 Le certificat Let's Encrypt expire le **02/09/2026**. Pour le renouveler :
 
 ```bash
-# Sur l'EC2
 sudo certbot certonly \
   --manual \
   --preferred-challenges dns \
@@ -311,7 +289,9 @@ sudo systemctl reload nginx
 
 ## 👤 Auteur
 
-**Fred (Whitedukecmr)**
-- Déploiement, infrastructure et configuration : Fred
+**Frédéric Junior EPESSE PRISO**
+Alternant en systèmes, réseaux et cloud computing
+
+- Déploiement, infrastructure et configuration : Frédéric Junior EPESSE PRISO
 - Code applicatif : généré par [Claude](https://claude.ai) (Anthropic)
 - Projet personnel d'apprentissage DevOps — Juin 2026
