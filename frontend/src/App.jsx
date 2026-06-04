@@ -14,7 +14,7 @@ function calcDailySteps(age, weight, targetWeight, weeks) {
   const dailyCalories = totalCalories / (weeks * 7);
   const kcalPerStep = 0.04 * (weight / 70);
   const steps = Math.round(dailyCalories / kcalPerStep);
-  const base = age >= 60 ? 6000 : age >= 50 ? 7000 : age >= 40 ? 8000 : 9000;
+  const base = age >= 60 ? 6000 : age >= 50 ? 7000 : age >= 40 ? 8000 : age >= 30 ? 9000 : 10000;
   return Math.min(Math.max(steps + base, base), 20000);
 }
 
@@ -139,7 +139,7 @@ function MealAnalyzer() {
               <p style={{ fontSize: 12, color: "#888", margin: "4px 0 0" }}>JPG, PNG acceptes</p>
             </div>
         }
-        <input ref={fileRef} type="file" accept="image/*" capture="environment"
+        <input ref={fileRef} type="file" accept="image/*"
           style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
       </div>
       {image && !result && <Btn onClick={analyze} disabled={loading}>{loading ? "Analyse en cours..." : "Analyser ce repas"}</Btn>}
@@ -248,7 +248,9 @@ function Dashboard({ profile, onReset }) {
                 ? ["Varie les terrains", "Marche 30 min minimum sans pause", "Associe stretching et marche", "Surveille ta frequence cardiaque"]
                 : profile.age >= 40
                 ? ["Vise 10 000 pas par jour", "Integre des montees pour bruler plus", "Marche rapide 2x par semaine", "Suivi hebdomadaire du poids"]
-                : ["Intercale des seances de marche rapide", "Combine marche et musculation legere", "Suis tes pas avec un tracker", "Reste actif en dehors des seances"]
+                : profile.age >= 30
+                ? ["Intercale des seances de marche rapide", "Combine marche et musculation legere", "Suis tes pas avec un tracker", "Reste actif en dehors des seances"]
+                : ["Profite de ton energie maximale", "Vise 12 000 pas par jour", "Integre course et marche alternees", "Rejoins un groupe de marche sportive"]
               ).map((tip, i) => <p key={i} style={{ margin: "0 0 6px", fontSize: 13, opacity: 0.9 }}>✓ {tip}</p>)}
             </div>
           </>
@@ -265,6 +267,7 @@ export default function App() {
   const [finalProfile, setFinalProfile] = useState(null);
 
   const ageGroups = [
+    { range: "20-29", min: 20, emoji: "⚡" },
     { range: "30-39", min: 30, emoji: "🏃" },
     { range: "40-49", min: 40, emoji: "🚶" },
     { range: "50-59", min: 50, emoji: "🧘" },
