@@ -2,6 +2,8 @@ services:
   backend:
     image: ${ECR_REGISTRY}/slimkit/backend:latest
     container_name: slimkit-backend
+    ports:
+      - "3001:3001"
     environment:
       - ANTHROPIC_API_KEY=not-needed
     restart: unless-stopped
