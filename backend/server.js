@@ -48,7 +48,7 @@ app.post('/api/analyze-meal', async (req, res) => {
     }
 
     const command = new InvokeModelCommand({
-      modelId: 'anthropic.claude-sonnet-4-20250514-v1:0',
+      modelId: 'eu.anthropic.claude-sonnet-4-20250514-v1:0',
       contentType: 'application/json',
       accept: 'application/json',
       body: JSON.stringify(payload)
